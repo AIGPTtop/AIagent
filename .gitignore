@@ -1,0 +1,33 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# --- 环境与密钥 ---
+.env
+.env.local
+*.key
+.deepseek_key
+
+# --- 运行产物 ---
+uploads/
+logs/
+*.log
+milvus/
+*.db
+*.sqlite3
+pgdata/
+
+# --- 模型权重（体积大，请用 scripts/download_models.py 获取）---
+models/
+
+# --- 系统 ---
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

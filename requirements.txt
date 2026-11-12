@@ -1,0 +1,47 @@
+# 说明：torch 需按 CUDA 版本单独安装，建议先执行：
+#   pip install torch==2.2.2 torchvision==0.17.2 torchaudio==2.2.2 \
+#       --index-url https://download.pytorch.org/whl/cu118
+
+# --- Web ---
+fastapi>=0.115.0
+uvicorn[standard]>=0.34.0
+python-multipart>=0.0.18
+
+# --- 配置与校验 ---
+pydantic>=2.10.0
+pydantic-settings>=2.7.0
+python-dotenv>=1.0.0
+
+# --- 存储 ---
+sqlalchemy>=2.0.0
+asyncpg>=0.30.0
+greenlet>=3.0.0
+psycopg2-binary>=2.9.0
+redis>=5.2.0
+pymilvus>=2.5.0
+milvus-lite>=2.4.0
+pyarrow==16.1.0
+numpy<2
+
+# --- LLM 与编排 ---
+openai>=1.60.0
+httpx>=0.28.0
+langchain>=0.3.0
+langchain-openai>=0.3.0
+langchain-community>=0.3.0
+langgraph>=0.3.0
+
+# --- 检索与模型 ---
+sentence-transformers==3.4.1
+transformers==4.49.0
+tiktoken>=0.8.0
+rank-bm25>=0.2.2
+jieba>=0.42.1
+
+# --- 文档解析 ---
+pypdf>=5.0.0
+python-docx>=1.1.0
+
+# --- 观测 ---
+loguru>=0.7.0
+tenacity>=9.0.0

@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>星云知识库 Agent · 控制台</title>
+<style>
+  :root{
+    --bg:#f6f7fb; --panel:#ffffff; --line:#e6e8f0; --text:#12172b; --muted:#6b7280;
+    --brand:#4f46e5; --brand-soft:#eef2ff; --ok:#10b981; --warn:#f59e0b; --bad:#ef4444;
+    --radius:14px; --shadow:0 1px 2px rgba(16,24,40,.06),0 8px 24px rgba(16,24,40,.06);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font:14px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
+  .app{display:grid;grid-template-columns:224px 1fr;min-height:100vh}
+  /* ---------- 侧栏 ---------- */
+  aside{background:var(--panel);border-right:1px solid var(--line);padding:20px 14px;position:sticky;top:0;height:100vh}
+  .logo{display:flex;align-items:center;gap:10px;padding:0 8px 18px}
+  .logo .dot{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,#6366f1,#8b5cf6);
+    display:grid;place-items:center;color:#fff;font-weight:700;font-size:15px}
+  .logo b{font-size:15px;letter-spacing:.2px}
+  .logo small{display:block;color:var(--muted);font-size:11px;font-weight:400}
+  nav a{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;color:#374151;
+    text-decoration:none;font-size:13.5px;margin-bottom:2px;cursor:pointer}
+  nav a:hover{background:#f3f4f8}
+  nav a.active{background:var(--brand-soft);color:var(--brand);font-weight:600}
+  .side-foot{margin-top:22px;padding:12px;border-top:1px dashed var(--line);color:var(--muted);font-size:11.5px}
+  .badge{display:inline-flex;align-items:center;gap:6px;padding:3px 9px;border-radius:999px;
+    font-size:11.5px;font-weight:600;background:#ecfdf5;color:#047857}
+  .badge.bad{background:#fef2f2;color:#b91c1c}
+  /* ---------- 主区 ---------- */
+  main{padding:26px 32px 60px;max-width:1080px}
+  h1{font-size:20px;margin:0 0 4px}
+  .sub{color:var(--muted);font-size:13px;margin-bottom:20px}
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px}
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow)}
+  .stat .k{color:var(--muted);font-size:11.5px;margin-bottom:4px}
+  .stat .v{font-size:19px;font-weight:700}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--shadow);padding:18px 20px;margin-bottom:16px}
+  .card h3{margin:0 0 12px;font-size:14px;display:flex;align-items:center;gap:8px}
+  .card h3 .tag{font-size:10.5px;font-weight:600;color:var(--brand);background:var(--brand-soft);
+    padding:2px 7px;border-radius:6px}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  input[type=text],select{flex:1;min-width:180px;padding:10px 12px;border:1px solid var(--line);
+    border-radius:10px;font:inherit;background:#fbfbfe;outline:none}
+  input[type=text]:focus,select:focus{border-color:#c7d2fe;box-shadow:0 0 0 3px #eef2ff}
+  button{padding:10px 16px;border:0;border-radius:10px;background:var(--brand);color:#fff;
+    font:inherit;font-weight:600;cursor:pointer}
+  button:hover{filter:brightness(1.05)}
+  button:disabled{opacity:.5;cursor:not-allowed}
+  button.ghost{background:#fff;color:#374151;border:1px solid var(--line)}
+  button.ok{background:var(--ok)} button.danger{background:var(--bad)}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+  .chip{padding:5px 11px;background:#f3f4f8;border-radius:999px;font-size:12px;color:#4b5563;cursor:pointer}
+  .chip:hover{background:var(--brand-soft);color:var(--brand)}
+  /* 对话 */
+  .thread{display:flex;flex-direction:column;gap:12px;margin-top:14px}
+  .msg{display:flex;gap:10px}
+  .msg .av{width:28px;height:28px;border-radius:8px;flex:0 0 28px;display:grid;place-items:center;
+    font-size:12px;font-weight:700;color:#fff;background:#94a3b8}
+  .msg.user .av{background:#6366f1}
+  .msg.bot .av{background:#0ea5e9}
+  .bubble{background:#f8fafc;border:1px solid var(--line);border-radius:12px;padding:10px 14px;white-space:pre-wrap;flex:1}
+  .msg.user .bubble{background:var(--brand-soft);border-color:#e0e7ff}
+  .cites{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+  .cite{font-size:11.5px;background:#fff;border:1px solid var(--line);border-radius:8px;padding:6px 9px;max-width:100%}
+  .cite b{color:var(--brand)}
+  .meta{color:var(--muted);font-size:11.5px;margin-top:8px}
+  /* 检索结果 */
+  .hit{border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-top:10px;background:#fdfdff}
+  .hit .top{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:6px}
+  .hit .score{font-weight:700;font-size:12.5px;color:var(--brand)}
+  .bar{height:5px;border-radius:99px;background:#eef0f6;overflow:hidden;margin:6px 0 8px}
+  .bar i{display:block;height:100%;background:linear-gradient(90deg,#6366f1,#8b5cf6)}
+  .hit p{margin:0;color:#374151;font-size:13px;white-space:pre-wrap}
+  .rank{font-size:11px;color:var(--muted);background:#f3f4f8;border-radius:6px;padding:2px 7px}
+  /* 审批 */
+  .approval{border:1px solid #fde68a;background:#fffbeb;border-radius:12px;padding:14px;margin-top:12px}
+  .approval b{color:#92400e}
+  pre{background:#0f172a;color:#e2e8f0;border-radius:12px;padding:14px;overflow:auto;font-size:12px;line-height:1.55}
+  .kv{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  .kv div{background:#fbfbfe;border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+  .kv .k{color:var(--muted);font-size:11px}
+  .kv .v{font-weight:700;font-size:16px}
+  .hidden{display:none!important}
+  .hint{color:var(--muted);font-size:12px;margin-top:8px}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside>
+    <div class="logo">
+      <div class="dot">N</div>
+      <div><b>星云 Agent</b><small>企业知识库 · 控制台</small></div>
+    </div>
+    <nav>
+      <a data-view="chat" class="active">💬 知识问答</a>
+      <a data-view="search">🔍 检索对比</a>
+      <a data-view="agent">🤖 工具与审批</a>
+      <a data-view="ops">📊 运行指标</a>
+    </nav>
+    <div class="side-foot">
+      <div id="statusBadge" class="badge">● 检测中…</div>
+      <div style="margin-top:8px">服务地址<br><code>127.0.0.1:8000</code></div>
+    </div>
+  </aside>
+
+  <main>
+    <h1 id="viewTitle">知识库问答</h1>
+    <div class="sub" id="viewSub">基于混合检索 + 重排 + 引用的 RAG 问答，答案可溯源到原文段落。</div>
+
+    <div class="stats">
+      <div class="stat"><div class="k">知识库文档</div><div class="v" id="statDocs">–</div></div>
+      <div class="stat"><div class="k">向量块</div><div class="v" id="statChunks">–</div></div>
+      <div class="stat"><div class="k">生成模型</div><div class="v" style="font-size:14px" id="statModel">–</div></div>
+      <div class="stat"><div class="k">拒答阈值</div><div class="v" id="statThr">0.10</div></div>
+    </div>
+
+    <!-- 问答 -->
+    <section id="view-chat">
+      <div class="card">
+        <h3>提问 <span class="tag">流式输出 + 引用</span></h3>
+        <div class="row">
+          <input type="text" id="chatInput" placeholder="例如：年假有几天？" />
+          <button id="chatSend">发送</button>
+          <button class="ghost" id="chatClear">清空</button>
+        </div>
+        <div class="chips" id="chatSamples"></div>
+        <div class="thread" id="thread"></div>
+      </div>
+    </section>
+
+    <!-- 检索 -->
+    <section id="view-search" class="hidden">
+      <div class="card">
+        <h3>检索模式对比 <span class="tag">向量 / BM25 / 混合</span></h3>
+        <div class="row">
+          <input type="text" id="searchInput" placeholder="输入查询，例如：发票税号是多少" />
+          <select id="searchMode">
+            <option value="hybrid">混合（RRF）</option>
+            <option value="vector">纯向量</option>
+            <option value="keyword">纯 BM25</option>
+          </select>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:#4b5563">
+            <input type="checkbox" id="searchRerank" checked /> 重排
+          </label>
+          <button id="searchBtn">检索</button>
+        </div>
+        <div class="hint">同一问题切换模式，能直观看到“关键词命中”和“语义命中”的差别。</div>
+        <div id="searchResults"></div>
+      </div>
+    </section>
+
+    <!-- Agent -->
+    <section id="view-agent" class="hidden">
+      <div class="card">
+        <h3>Agent 工具调用 <span class="tag">LangGraph · 人工审批</span></h3>
+        <div class="row">
+          <input type="text" id="agentInput" placeholder="例如：我今年还有几天年假？" />
+          <button id="agentSend">执行</button>
+        </div>
+        <div class="chips" id="agentSamples"></div>
+        <div id="agentResult"></div>
+      </div>
+    </section>
+
+    <!-- 指标 -->
+    <section id="view-ops" class="hidden">
+      <div class="card">
+        <h3>延迟分位 <span class="tag">来自 trace_logs</span></h3>
+        <div class="kv" id="latencyBox"><div><div class="k">加载中</div><div class="v">–</div></div></div>
+        <div class="row" style="margin-top:12px">
+          <button class="ghost" id="refreshOps">刷新</button>
+        </div>
+      </div>
+      <div class="card">
+        <h3>熔断器状态 <span class="tag">模型网关</span></h3>
+        <div id="circuitBox" class="hint">加载中…</div>
+      </div>
+      <div class="card">
+        <h3>记忆状态 <span class="tag">Redis TTL + 摘要</span></h3>
+        <div class="row">
+          <input type="text" id="memCid" placeholder="会话 ID，例如 acceptance-1" />
+          <button class="ghost" id="memBtn">查询</button>
+        </div>
+        <pre id="memBox" class="hidden"></pre>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+const API = "/api/v1";
+const $ = (id) => document.getElementById(id);
+
+/* ---------------- 视图切换 ---------------- */
+const VIEWS = {
+  chat:  ["知识库问答", "基于混合检索 + 重排 + 引用的 RAG 问答，答案可溯源到原文段落。"],
+  search:["检索对比", "同一问题用三种检索策略，直观看命中差异与分数。"],
+  agent: ["工具与审批", "查年假、查工单、提交请假；写操作会暂停等待人工确认。"],
+  ops:   ["运行指标", "延迟分位、熔断状态与会话记忆。"]
+};
+function switchView(v) {
+  if (!VIEWS[v]) v = "chat";
+  document.querySelectorAll("nav a").forEach((x) => x.classList.toggle("active", x.dataset.view === v));
+  ["chat","search","agent","ops"].forEach((k) => $("view-"+k).classList.toggle("hidden", k !== v));
+  $("viewTitle").textContent = VIEWS[v][0];
+  $("viewSub").textContent = VIEWS[v][1];
+  if (v === "ops") loadOps();
+  if (location.hash !== "#" + v) history.replaceState(null, "", "#" + v);
+}
+document.querySelectorAll("nav a").forEach((a) => { a.onclick = () => switchView(a.dataset.view); });
+window.addEventListener("hashchange", () => switchView(location.hash.slice(1)));
+
+/* ---------------- 基础请求 ---------------- */
+async function api(path, body, opts = {}) {
+  const res = await fetch(API + path, {
+    method: body ? "POST" : "GET",
+    headers: body ? { "Content-Type": "application/json" } : {},
+    body: body ? JSON.stringify(body) : undefined,
+    ...opts
+  });
+  if (!res.ok) throw new Error((await res.text()).slice(0, 200));
+  return res.json();
+}
+
+/* ---------------- 顶部状态 ---------------- */
+async function loadStatus() {
+  try {
+    const [health, ready, docs] = await Promise.all([
+      api("/health"), api("/health/ready"), api("/documents")
+    ]);
+    const badge = $("statusBadge");
+    if (health.status === "ok" && ready.status === "ready") {
+      badge.className = "badge"; badge.textContent = "● 服务正常";
+    } else {
+      badge.className = "badge bad"; badge.textContent = "● 异常";
+    }
+    $("statDocs").textContent = docs.length;
+    try {
+      const kb = await api("/metrics/kb");
+      $("statChunks").textContent = kb.chunks;
+      $("statModel").textContent = kb.model;
+      $("statThr").textContent = Number(kb.refusal_threshold).toFixed(2);
+    } catch (e) {
+      $("statChunks").textContent = "–";
+    }
+  } catch (e) {
+    $("statusBadge").className = "badge bad";
+    $("statusBadge").textContent = "● 连接失败";
+  }
+}
+
+/* ---------------- 问答 ---------------- */
+const SAMPLES = ["年假有几天", "发票税号是多少", "P0 工单多久响应", "公司食堂在哪"];
+$("chatSamples").innerHTML = SAMPLES.map((q) => `<span class="chip">${q}</span>`).join("");
+$("chatSamples").onclick = (e) => {
+  if (e.target.classList.contains("chip")) { $("chatInput").value = e.target.textContent; sendChat(); }
+};
+$("chatClear").onclick = () => { $("thread").innerHTML = ""; };
+
+function addMsg(role, text) {
+  const wrap = document.createElement("div");
+  wrap.className = "msg " + role;
+  wrap.innerHTML = `<div class="av">${role === "user" ? "我" : "AI"}</div>
+    <div class="bubble"><span class="txt"></span><div class="cites"></div><div class="meta"></div></div>`;
+  wrap.querySelector(".txt").textContent = text || "";
+  $("thread").appendChild(wrap);
+  wrap.scrollIntoView({ behavior: "smooth", block: "end" });
+  return wrap;
+}
+
+async function sendChat() {
+  const q = $("chatInput").value.trim();
+  if (!q) return;
+  $("chatInput").value = "";
+  $("chatSend").disabled = true;
+  addMsg("user", q);
+  const bot = addMsg("bot", "");
+  const txt = bot.querySelector(".txt");
+  const meta = bot.querySelector(".meta");
+  const cites = bot.querySelector(".cites");
+  const t0 = performance.now();
+  let firstToken = null;
+
+  try {
+    const res = await fetch(API + "/chat/stream", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ messages: [{ role: "user", content: q }] })
+    });
+    if (!res.ok || !res.body) throw new Error("流式接口不可用");
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buf = "";
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buf += decoder.decode(value, { stream: true });
+      const blocks = buf.split("\n\n");
+      buf = blocks.pop();
+      for (const block of blocks) {
+        const line = block.split("\n").find((l) => l.startsWith("data: "));
+        if (!line) continue;
+        const ev = JSON.parse(line.slice(6));
+        if (ev.type === "retrieval") {
+          if (ev.refused) {
+            txt.textContent = "（未在知识库找到相关证据，准备拒答）";
+          } else {
+            meta.textContent = `检索到 ${ev.hits.length} 条证据，首条相关度 ${ev.hits[0].score}`;
+          }
+        } else if (ev.type === "refusal") {
+          txt.textContent = ev.content;
+          meta.textContent = "证据不足，未调用模型";
+        } else if (ev.type === "delta") {
+          if (firstToken === null) firstToken = performance.now() - t0;
+          txt.textContent += ev.content;
+          bot.scrollIntoView({ behavior: "smooth", block: "end" });
+        } else if (ev.type === "done") {
+          const total = performance.now() - t0;
+          cites.innerHTML = (ev.citations || []).map((c) =>
+            `<div class="cite"><b>[${c.index}]</b> ${c.snippet ? c.snippet.slice(0, 46) + "…" : c.result_id.slice(0, 8)}</div>`
+          ).join("");
+          if (!meta.textContent || !meta.textContent.includes("证据不足")) {
+            meta.textContent = `首字 ${firstToken ? Math.round(firstToken) : "-"} ms · 总耗时 ${Math.round(total)} ms · 引用 ${(ev.citations || []).length} 条`;
+          }
+        } else if (ev.type === "error") {
+          txt.textContent = "出错：" + ev.message;
+        }
+      }
+    }
+  } catch (e) {
+    txt.textContent = "请求失败：" + e.message;
+  } finally {
+    $("chatSend").disabled = false;
+  }
+}
+$("chatSend").onclick = sendChat;
+$("chatInput").addEventListener("keydown", (e) => { if (e.key === "Enter") sendChat(); });
+
+/* ---------------- 检索 ---------------- */
+$("searchBtn").onclick = doSearch;
+$("searchInput").addEventListener("keydown", (e) => { if (e.key === "Enter") doSearch(); });
+
+async function doSearch() {
+  const q = $("searchInput").value.trim();
+  if (!q) return;
+  $("searchBtn").disabled = true;
+  $("searchResults").innerHTML = `<div class="hint">检索中…</div>`;
+  try {
+    const data = await api("/search", {
+      query: q, top_k: 5,
+      mode: $("searchMode").value,
+      rerank: $("searchRerank").checked
+    });
+    const max = Math.max(...data.hits.map((h) => Math.abs(h.score)), 0.0001);
+    $("searchResults").innerHTML = data.hits.map((h, i) => `
+      <div class="hit">
+        <div class="top">
+          <span class="rank">#${i + 1} · 块 ${h.chunk_index}</span>
+          <span class="score">${h.score.toFixed(4)}</span>
+        </div>
+        <div class="bar"><i style="width:${Math.max(4, (Math.abs(h.score) / max) * 100)}%"></i></div>
+        <p>${escapeHtml(h.content.slice(0, 260))}${h.content.length > 260 ? "…" : ""}</p>
+        ${h.ranks && Object.keys(h.ranks).length ? `<div class="hint">各路排名：${JSON.stringify(h.ranks)}</div>` : ""}
+      </div>`).join("") || `<div class="hint">没有命中</div>`;
+  } catch (e) {
+    $("searchResults").innerHTML = `<div class="hint">失败：${escapeHtml(e.message)}</div>`;
+  } finally { $("searchBtn").disabled = false; }
+}
+
+/* ---------------- Agent ---------------- */
+const AGENT_SAMPLES = ["T-1001 现在什么状态", "我还有几天年假", "帮我请下周五的假"];
+$("agentSamples").innerHTML = AGENT_SAMPLES.map((q) => `<span class="chip">${q}</span>`).join("");
+$("agentSamples").onclick = (e) => {
+  if (e.target.classList.contains("chip")) { $("agentInput").value = e.target.textContent; runAgent(); }
+};
+$("agentSend").onclick = runAgent;
+$("agentInput").addEventListener("keydown", (e) => { if (e.key === "Enter") runAgent(); });
+
+function renderAgent(d, threadId) {
+  const box = $("agentResult");
+  if (d.status === "pending_approval") {
+    const a = d.approval || {};
+    box.innerHTML = `
+      <div class="approval">
+        <b>⚠ 需要人工确认</b>
+        <div class="hint">工具：<code>${a.tool}</code> · 参数：<code>${escapeHtml(JSON.stringify(a.args))}</code></div>
+        <div class="hint">${a.reason || ""}</div>
+        <div class="row" style="margin-top:10px">
+          <button class="ok" id="approveBtn">批准执行</button>
+          <button class="danger" id="rejectBtn">拒绝</button>
+        </div>
+      </div>`;
+    $("approveBtn").onclick = () => resume(threadId, true);
+    $("rejectBtn").onclick = () => resume(threadId, false);
+    return;
+  }
+  box.innerHTML = `
+    <div class="card" style="margin-top:12px;background:#fafbff">
+      <h3>执行结果 <span class="tag">${d.tool || "无工具"}</span></h3>
+      <div style="white-space:pre-wrap">${escapeHtml(d.answer || "")}</div>
+      ${d.tool_result ? `<pre>${escapeHtml(JSON.stringify(d.tool_result, null, 2))}</pre>` : ""}
+      ${d.tool_error ? `<div class="hint" style="color:#b91c1c">错误：${escapeHtml(d.tool_error)}</div>` : ""}
+    </div>`;
+}
+
+async function runAgent() {
+  const q = $("agentInput").value.trim();
+  if (!q) return;
+  $("agentSend").disabled = true;
+  $("agentResult").innerHTML = `<div class="hint">执行中…</div>`;
+  try {
+    const d = await api("/agent/chat", { message: q });
+    renderAgent(d, d.thread_id);
+  } catch (e) {
+    $("agentResult").innerHTML = `<div class="hint">失败：${escapeHtml(e.message)}</div>`;
+  } finally { $("agentSend").disabled = false; }
+}
+
+async function resume(threadId, approved) {
+  $("agentResult").innerHTML = `<div class="hint">提交审批结果…</div>`;
+  try {
+    const d = await api("/agent/resume", { thread_id: threadId, approved });
+    renderAgent(d, threadId);
+  } catch (e) {
+    $("agentResult").innerHTML = `<div class="hint">失败：${escapeHtml(e.message)}</div>`;
+  }
+}
+
+/* ---------------- 指标 ---------------- */
+async function loadOps() {
+  try {
+    const [lat, cir] = await Promise.all([
+      api("/metrics/latency?operation=chat&limit=200"),
+      api("/metrics/circuit")
+    ]);
+    $("latencyBox").innerHTML = [
+      ["调用次数", (lat.count || 0)], ["平均", ((lat.avg_ms || 0)) + " ms"],
+      ["P50", ((lat.p50_ms || 0)) + " ms"], ["P95", ((lat.p95_ms || 0)) + " ms"],
+      ["P99", ((lat.p99_ms || 0)) + " ms"], ["错误率", ((lat.error_rate || 0)) + " %"]
+    ].map(([k, v]) => `<div><div class="k">${k}</div><div class="v">${v}</div></div>`).join("");
+    $("circuitBox").innerHTML = (cir.models || []).map((m) =>
+      `<div class="row" style="justify-content:space-between">
+         <code>${m.model_id}</code>
+         <span class="badge ${m.state === "closed" ? "" : "bad"}">${m.state}</span>
+       </div>`).join("") || "无数据";
+  } catch (e) {
+    $("latencyBox").innerHTML = `<div class="hint">加载失败：${escapeHtml(e.message)}</div>`;
+  }
+}
+$("refreshOps").onclick = loadOps;
+$("memBtn").onclick = async () => {
+  const cid = $("memCid").value.trim() || "acceptance-1";
+  try {
+    const m = await api("/memory/" + encodeURIComponent(cid));
+    const box = $("memBox");
+    box.classList.remove("hidden");
+    box.textContent = JSON.stringify(m, null, 2);
+  } catch (e) {
+    $("memBox").classList.remove("hidden");
+    $("memBox").textContent = "查询失败：" + e.message;
+  }
+};
+
+function escapeHtml(s) {
+  return String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+if (!$("thread").children.length) {
+  $("thread").innerHTML = `<div class="hint" style="padding:6px 2px">
+    还没有对话。点上面的示例，或直接输入问题——例如「出差住宿标准是多少」。</div>`;
+}
+
+loadStatus();
+switchView((location.hash || "#chat").slice(1));
+
+/* 演示模式：?demo=1 自动跑一条示例，方便截图与验收 */
+if (new URLSearchParams(location.search).has("demo")) {
+  const view = (location.hash || "#chat").slice(1);
+  setTimeout(() => {
+    if (view === "chat") { $("chatInput").value = "年假有几天"; sendChat(); }
+    if (view === "search") { $("searchInput").value = "发票税号是多少"; doSearch(); }
+    if (view === "agent") { $("agentInput").value = "帮我请下周五的假"; runAgent(); }
+  }, 700);
+}
+</script>
+</body>
+</html>
+
+
+
+
